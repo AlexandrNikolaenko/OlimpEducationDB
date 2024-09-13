@@ -56,9 +56,6 @@ const Users = sequelize.define(
         donetask_ids: {
             type: DataTypes.TEXT
         },
-        login: {
-            type: DataTypes.STRING
-        },
         password: {
             type: DataTypes.STRING
         },
@@ -114,8 +111,7 @@ Users.sync({alter: true});
 Users.create({
     userId: 1, 
     name: 'Александр Николаенко',
-    donetask_ids: '', 
-    login: 'nikol.alex06@mail.ru', 
+    donetask_ids: '',
     password: 'A9l0E6x0', 
     email: 'nikol.alex06@mail.ru'
 });

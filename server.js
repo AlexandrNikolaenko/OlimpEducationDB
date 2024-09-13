@@ -201,7 +201,7 @@ app.post('/login', function(request, response) {
     } 
   }),
 
-  connection.query(`select * from Users where login = '${request.body.login}' and password = '${request.body.password}'`, function (_, result) {
+  connection.query(`select * from Users where email = '${request.body.email}' and password = '${request.body.password}'`, function (_, result) {
     response.status(200);
     if (result.length != 0) {
       response.send({name: result[0].name, userId: result[0].userId});
@@ -304,7 +304,7 @@ app.post('/signup', function(request, response){
               }
             });
 
-            connection.query(`insert into Users set userId = ${data.id}, name = '${request.body.name}', donetask_ids = '', login = '${request.body.login}', password = '${request.body.password}', email = '${request.body.email}'`, function (err) {
+            connection.query(`insert into Users set userId = ${data.id}, name = '${request.body.name}', donetask_ids = '', password = '${request.body.password}', email = '${request.body.email}'`, function (err) {
               console.log(err);
               response.send({userId: data.id, name: request.body.name});
             })
