@@ -38,49 +38,49 @@ app.get('/', function(request, response) {
     });
 
     if (request.query.class != '0' && request.query.level != '0' && request.query.tags != ''){
-      connection.query(`select * from Tasks where class = ${request.query.class} and level = ${request.query.level.concat(createTagsQuery(request.query.tags))}`, 
+      connection.query(`select * from Tasks where class = ${request.query.class} and level = ${request.query.level.concat(createTagsQuery(request.query.tags))} order by _id`, 
         function(_, results) {
             response.send(results);
         }
       )
     } else if (request.query.class == '0' && request.query.level == '0' && request.query.tags == ''){
-      connection.query(`select * from Tasks`, 
+      connection.query(`select * from Tasks order by _id`, 
         function(_, results) {
             response.send(results);
         }
       )
     } else if (request.query.class != '0' && request.query.level == '0' && request.query.tags != ''){
-      connection.query(`select * from Tasks where class = ${request.query.class.concat(createTagsQuery(request.query.tags))}`, 
+      connection.query(`select * from Tasks where class = ${request.query.class.concat(createTagsQuery(request.query.tags))} order by _id`, 
         function(_, results) {
             response.send(results);
         }
       )
     } else if (request.query.class == '0' && request.query.level == '0' && request.query.tags != ''){
-      connection.query(`select * from Tasks where class > ${request.query.class.concat(createTagsQuery(request.query.tags))}`, 
+      connection.query(`select * from Tasks where class > ${request.query.class.concat(createTagsQuery(request.query.tags))} order by _id`, 
         function(_, results) {
             response.send(results);
         }
       )
     } else if (request.query.class == '0' && request.query.level != '0' && request.query.tags != ''){
-      connection.query(`select * from Tasks where level = ${request.query.level.concat(createTagsQuery(request.query.tags))}`, 
+      connection.query(`select * from Tasks where level = ${request.query.level.concat(createTagsQuery(request.query.tags))} order by _id`, 
         function(_, results) {
             response.send(results);
         }
       )
     } else if (request.query.class != '0' && request.query.level == '0' && request.query.tags == ''){
-      connection.query(`select * from Tasks where level = ${request.query.level}`, 
+      connection.query(`select * from Tasks where level = ${request.query.level} order by _id`, 
         function(_, results) {
             response.send(results);
         }
       )
     } else if (request.query.class != '0' && request.query.level != '0' && request.query.tags == ''){
-      connection.query(`select * from Tasks where class = ${request.query.class} and level = ${request.query.level}`, 
+      connection.query(`select * from Tasks where class = ${request.query.class} and level = ${request.query.level} order by _id`, 
         function(_, results) {
             response.send(results);
         }
       )
     } else {
-      connection.query(`select * from Tasks where class = ${request.query.class}`, 
+      connection.query(`select * from Tasks where class = ${request.query.class} order by _id`, 
         function(_, results) {
             response.send(results);
         }
