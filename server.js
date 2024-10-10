@@ -2,7 +2,6 @@ const mysql2 = require('mysql2');
 const express = require('express');
 const bodyParser = require('body-parser')
 const cors = require('cors');
-const e = require('express');
 
 
 const app = express();
@@ -403,14 +402,14 @@ app.post('/removetask', function(request, response) {
   response.set({
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*"
-  })
+  });
 
   const connection = mysql2.createConnection({
     host: 'localhost',
     user: 'AliBaBa',
     password: 'A9l0E6x0',
     database: 'Olimpeducation'
-  })
+  });
 
   connection.connect(function (error) {
     if (error) {
@@ -432,6 +431,52 @@ app.post('/removetask', function(request, response) {
       });
       connection.end();
     })
+});
+
+app.delete('/removeuser', function(request, response) {
+  console.log(request.body)
+
+  response.status(200);
+  response.set({
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*"
+  });
+
+  const connection = mysql2.createConnection({
+    host: 'localhost',
+    user: 'AliBaBa',
+    password: 'A9l0E6x0',
+    database: 'Olimpeducation'
+  });
+
+  connection.connect(function (error) {
+    if (error) {
+      console.log(new Error(error));
+    }
+  });
+
+  if (request.body.email != '') {
+    connection.query(`delete from Users where email = '${request.body.email}'`, function(e, _) {
+      if (e) {
+        console.log(e)
+        response.send({res: 'not success'});
+      } else {
+        response.send({res: 'success'})
+      }
+    })
+  } else if (request.body.userid != '') {
+    connection.query(`delete from Users where userid = ${request.body.userid}`, function(e, _) {
+      if (e) {
+        console.log(e)
+        response.send({res: 'not success'});
+      } else {
+        response.send({res: 'success'})
+      }
+    })
+  } else {
+    response.status(500);
+  }
+  connection.end();
 })
 
 app.listen(5000);

@@ -1,4 +1,3 @@
-const { secureHeapUsed } = require('crypto');
 const {Sequelize, DataTypes} = require('sequelize');
 const tagsFile = require('./data.js');
 const fs = require('fs');
