@@ -49,6 +49,10 @@ const Users = sequelize.define(
             unique: true,
             primaryKey: true
         },
+        isAdmin: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
+        },
         name: {
             type: DataTypes.STRING(1234)
         },
@@ -107,13 +111,14 @@ Users.sync({alter: true});
 //     console.log(stroke);
 // }
 
-Users.create({
-    userId: 1, 
-    name: 'Александр Николаенко',
-    donetask_ids: '',
-    password: 'A9l0E6x0', 
-    email: 'nikol.alex06@mail.ru'
-});
+// Users.create({
+//     userId: 1, 
+//     name: 'Александр Николаенко',
+//     isAdmin: true,
+//     donetask_ids: '',
+//     password: 'A9l0E6x0', 
+//     email: 'nikol.alex06@mail.ru'
+// });
 
 
 // sequelize.close();

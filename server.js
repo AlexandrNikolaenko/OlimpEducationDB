@@ -434,8 +434,6 @@ app.post('/removetask', function(request, response) {
 });
 
 app.delete('/removeuser', function(request, response) {
-  console.log(request.body)
-
   response.status(200);
   response.set({
     "Content-Type": "application/json",
@@ -476,6 +474,33 @@ app.delete('/removeuser', function(request, response) {
   } else {
     response.status(500);
   }
+  connection.end();
+});
+
+app.get('/getusers', function(_, response) {
+  response.status(200);
+  response.set({
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*"
+  });
+
+  const connection = mysql2.createConnection({
+    host: 'localhost',
+    user: 'AliBaBa',
+    password: 'A9l0E6x0',
+    database: 'Olimpeducation'
+  });
+
+  connection.connect(function (error) {
+    if (error) {
+      console.log(new Error(error));
+    }
+  });
+
+  connection.query('select * from Users', function(_, result) {
+    response.send(result);
+  })
+
   connection.end();
 })
 
