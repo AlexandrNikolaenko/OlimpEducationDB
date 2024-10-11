@@ -594,4 +594,90 @@ app.post('/recallrights', function(request, response) {
   connection.end();
 })
 
+app.get('/checkrighs', function(request, response) {
+  response.status(200);
+  response.set({
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*"
+  });
+
+  const connection = mysql2.createConnection({
+    host: 'localhost',
+    user: 'AliBaBa',
+    password: 'A9l0E6x0',
+    database: 'Olimpeducation'
+  });
+
+  connection.connect(function (error) {
+    if (error) {
+      console.log(new Error(error));
+    }
+  });
+
+  connection.query(`select isAdmin from Users where userId = ${request.query.userid}`, function(e, result) {
+    if (e || result.length == 0) {
+      console.log("error: " + toString(e))
+      response.status(500);
+    } else {
+      response.send({isAdmin: result[0].isAdmin == '1'});
+    }
+  })
+  
+  connection.end();
+});
+
+app.get('/gettasks', function(_, response) {
+  response.status(200);
+  response.set({
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*"
+  });
+
+  const connection = mysql2.createConnection({
+    host: 'localhost',
+    user: 'AliBaBa',
+    password: 'A9l0E6x0',
+    database: 'Olimpeducation'
+  });
+
+  connection.connect(function (error) {
+    if (error) {
+      console.log(new Error(error));
+    }
+  });
+
+  connection.query('select * from Tasks', function(_, result) {
+    response.send(result);
+  })
+
+  connection.end();
+});
+
+app.get('/getanswers', function(_, response) {
+  response.status(200);
+  response.set({
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*"
+  });
+
+  const connection = mysql2.createConnection({
+    host: 'localhost',
+    user: 'AliBaBa',
+    password: 'A9l0E6x0',
+    database: 'Olimpeducation'
+  });
+
+  connection.connect(function (error) {
+    if (error) {
+      console.log(new Error(error));
+    }
+  });
+
+  connection.query('select * from Answers', function(_, result) {
+    response.send(result);
+  })
+
+  connection.end();
+})
+
 app.listen(5000);
