@@ -504,4 +504,94 @@ app.get('/getusers', function(_, response) {
   connection.end();
 })
 
+app.post('/takerights', function(request, response) {
+  response.status(200);
+  response.set({
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*"
+  });
+
+  const connection = mysql2.createConnection({
+    host: 'localhost',
+    user: 'AliBaBa',
+    password: 'A9l0E6x0',
+    database: 'Olimpeducation'
+  });
+
+  connection.connect(function (error) {
+    if (error) {
+      console.log(new Error(error));
+    }
+  });
+
+  if (request.body.userid != '') {
+    connection.query(`update Users set isAdmin = true where userId = ${request.body.userid}`, function(e, _) {
+      if (e) {
+        console.log(e)
+        response.send({res: 'not success'});
+      } else {
+        response.send({res: 'success'})
+      }
+    });
+  } else if (request.body.email != '') {
+    connection.query(`update Users set isAdmin = true where email = '${request.body.email}'`, function(e, _) {
+      if (e) {
+        console.log(e)
+        response.send({res: 'not success'});
+      } else {
+        response.send({res: 'success'})
+      }
+    });
+  } else {
+    response.send(500);
+  }
+  
+  connection.end();
+})
+
+app.post('/recallrights', function(request, response) {
+  response.status(200);
+  response.set({
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*"
+  });
+
+  const connection = mysql2.createConnection({
+    host: 'localhost',
+    user: 'AliBaBa',
+    password: 'A9l0E6x0',
+    database: 'Olimpeducation'
+  });
+
+  connection.connect(function (error) {
+    if (error) {
+      console.log(new Error(error));
+    }
+  });
+
+  if (request.body.userid != '') {
+    connection.query(`update Users set isAdmin = false where userId = ${request.body.userid}`, function(e, _) {
+      if (e) {
+        console.log(e)
+        response.send({res: 'not success'});
+      } else {
+        response.send({res: 'success'})
+      }
+    });
+  } else if (request.body.email != '') {
+    connection.query(`update Users set isAdmin = false where email = '${request.body.email}'`, function(e, _) {
+      if (e) {
+        console.log(e)
+        response.send({res: 'not success'});
+      } else {
+        response.send({res: 'success'})
+      }
+    });
+  } else {
+    response.send(500);
+  }
+  
+  connection.end();
+})
+
 app.listen(5000);
