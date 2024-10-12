@@ -678,6 +678,202 @@ app.get('/getanswers', function(_, response) {
   })
 
   connection.end();
-})
+});
+
+app.post('/addnewtask', function(request, response) {
+  response.status(200);
+  response.set({
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*"
+  });
+
+  let tags = request.body.tags
+
+  const connection = mysql2.createConnection({
+    host: 'localhost',
+    user: 'AliBaBa',
+    password: 'A9l0E6x0',
+    database: 'Olimpeducation'
+  });
+
+  connection.connect(function (error) {
+    if (error) {
+      console.log(new Error(error));
+    }
+  });
+
+  connection.query(`insert into Tasks set _id = ${request.body._id} class = ${request.body.class} level = ${request.body.level} tags = '${tags}'`, function(e, _) {
+    if (e) {
+      console.log(e)
+      response.send({res: 'not success'});
+    } else {
+      response.send({res: 'success'})
+    }
+  })
+
+  connection.end();
+});
+
+app.delete('/removetask', function(request, response) {
+  response.status(200);
+  response.set({
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*"
+  });
+
+  const connection = mysql2.createConnection({
+    host: 'localhost',
+    user: 'AliBaBa',
+    password: 'A9l0E6x0',
+    database: 'Olimpeducation'
+  });
+
+  connection.connect(function (error) {
+    if (error) {
+      console.log(new Error(error));
+    }
+  });
+
+  connection.query(`delete from Tasks where _id = ${request.body._id}`, function(e, _) {
+    if (e) {
+      console.log(e)
+      response.send({res: 'not success'});
+    } else {
+      response.send({res: 'success'})
+    }
+  });
+
+  connection.end();
+});
+
+app.post('/edittask', function(request, response) {
+  response.status(200);
+  response.set({
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*"
+  });
+
+  let tags = request.body.tags;
+
+  const connection = mysql2.createConnection({
+    host: 'localhost',
+    user: 'AliBaBa',
+    password: 'A9l0E6x0',
+    database: 'Olimpeducation'
+  });
+
+  connection.connect(function (error) {
+    if (error) {
+      console.log(new Error(error));
+    }
+  });
+
+  connection.query(`update Tasks set class = ${request.body.class} level = ${request.body.level} tags = '${tags}' where _id = ${request.body._id}`, function(e, _) {
+    if (e) {
+      console.log(e)
+      response.send({res: 'not success'});
+    } else {
+      response.send({res: 'success'});
+    }
+  })
+
+  connection.end();
+});
+
+app.post('/addanswer', function(request, response) {
+  response.status(200);
+  response.set({
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*"
+  });
+
+  const connection = mysql2.createConnection({
+    host: 'localhost',
+    user: 'AliBaBa',
+    password: 'A9l0E6x0',
+    database: 'Olimpeducation'
+  });
+
+  connection.connect(function (error) {
+    if (error) {
+      console.log(new Error(error));
+    }
+  });
+
+  connection.query(`insert into Answers set nameFile = '${request.body.nameFile}'`, function(e, _) {
+    if (e) {
+      console.log(e)
+      response.send({res: 'not success'});
+    } else {
+      response.send({res: 'success'});
+    }
+  })
+
+  connection.end();
+});
+
+app.delete('/removeanswer', function(request, response){
+  response.status(200);
+  response.set({
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*"
+  });
+
+  const connection = mysql2.createConnection({
+    host: 'localhost',
+    user: 'AliBaBa',
+    password: 'A9l0E6x0',
+    database: 'Olimpeducation'
+  });
+
+  connection.connect(function (error) {
+    if (error) {
+      console.log(new Error(error));
+    }
+  });
+
+  connection.query(`delete from Answers where id = ${request.body.id} `, function(e, _) {
+    if (e) {
+      console.log(e)
+      response.send({res: 'not success'});
+    } else {
+      response.send({res: 'success'});
+    }
+  })
+
+  connection.end();
+});
+
+app.post('/editanswer', function(request, response){
+  response.status(200);
+  response.set({
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*"
+  });
+
+  const connection = mysql2.createConnection({
+    host: 'localhost',
+    user: 'AliBaBa',
+    password: 'A9l0E6x0',
+    database: 'Olimpeducation'
+  });
+
+  connection.connect(function (error) {
+    if (error) {
+      console.log(new Error(error));
+    }
+  });
+
+  connection.query(`update Answers set nameFile = ${request.body.nameFile} where id = ${request.body.id}`, function(e, _) {
+    if (e) {
+      console.log(e)
+      response.send({res: 'not success'});
+    } else {
+      response.send({res: 'success'});
+    }
+  })
+
+  connection.end();
+});
 
 app.listen(5000);
