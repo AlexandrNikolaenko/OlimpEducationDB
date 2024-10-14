@@ -832,7 +832,7 @@ app.delete('/removeanswer', function(request, response){
     }
   });
 
-  connection.query(`delete from Answers where id = ${request.body.id} `, function(e, _) {
+  connection.query(`delete from Answers where nameFile like '%${request.body.id}.pdf' `, function(e, _) {
     if (e) {
       console.log(e)
       response.send({res: 'not success'});
