@@ -1,10 +1,13 @@
 const mysql2 = require('mysql2');
 const express = require('express');
-const bodyParser = require('body-parser')
+const fileUpload = require('express-fileupload');
+const multer = require('multer');
+const bodyParser = require('body-parser');
 const cors = require('cors');
-
+const fs = require('fs');
 
 const app = express();
+// const upload = multer({dest: './uploads/'})
 
 function createTagsQuery(tagsStroke){
   let queryPart = '';
@@ -14,6 +17,26 @@ function createTagsQuery(tagsStroke){
   }
   return queryPart;
 }
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+      if (typeof req.body.class == 'string') {
+        cb(null, `../olimpeducation/public/Задачи/`); // Папка для хранения загруженных файлов
+      } else {
+        cb(null, `../olimpeducation/public/Answers/`);
+      }
+  },
+  filename: (req, file, cb) => {
+      cb(null, file.originalname); // Сохранение файла с оригинальным именем
+  }
+});
+
+const upload = multer({ storage: storage });
+
+// app.use(fileUpload({
+//   createParentPath: true,
+//   useTempFiles: true
+// }))
 
 // Получаем список заданий из базы данных по введенным критериям
 
@@ -687,7 +710,7 @@ app.post('/addnewtask', function(request, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
-  let tags = request.body.tags
+  let tags = request.body.tag
 
   const connection = mysql2.createConnection({
     host: 'localhost',
@@ -702,7 +725,7 @@ app.post('/addnewtask', function(request, response) {
     }
   });
 
-  connection.query(`insert into Tasks set _id = ${request.body._id} class = ${request.body.class} level = ${request.body.level} tags = '${tags}'`, function(e, _) {
+  connection.query(`insert into Tasks set _id = ${request.body._id}, class = ${request.body.class}, level = ${request.body.level}, tags = '${tags}'`, function(e, _) {
     if (e) {
       console.log(e)
       response.send({res: 'not success'});
@@ -713,6 +736,16 @@ app.post('/addnewtask', function(request, response) {
 
   connection.end();
 });
+
+app.post('/addnewtaskfile', upload.single('file'), function (request, response) {
+  response.set({
+    "Content-type": "application/json",
+    "Access-Control-Allow-Origin": "*"
+  });
+  response.status(200);
+  response.json({ message: 'File uploaded successfully', file: request.file });
+  
+})
 
 app.delete('/removetask', function(request, response) {
   response.status(200);
