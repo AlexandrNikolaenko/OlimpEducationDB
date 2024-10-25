@@ -18,13 +18,35 @@ function createTagsQuery(tagsStroke){
   return queryPart;
 }
 
+class Connection {
+  constructor () {
+    this.con =  mysql2.createConnection({
+      host: 'localhost',
+      user: 'AliBaBa',
+      password: 'A9l0E6x0',
+      database: 'OlimpEducation'
+    })}
+
+  connect(callback) {
+    this.con.connect((err) => callback(err));
+  }
+
+  query(querySql, callback) {
+    this.con.query(querySql, (err, result) => callback(err, result));
+  }
+
+  end(callback) {
+    this.con.end((err) => {if (callback) callback(err)});
+  }
+}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-      if (typeof req.body.class == 'string') {
-        cb(null, `../olimpeducation/public/Задачи/`); // Папка для хранения загруженных файлов
-      } else {
-        cb(null, `../olimpeducation/public/Answers/`);
-      }
+    if (typeof req.body.class == 'string') {
+      cb(null, `../olimpeducation/public/Задачи/`); // Папка для хранения загруженных файлов
+    } else {
+      cb(null, `../olimpeducation/public/Answers/`);
+    }
   },
   filename: (req, file, cb) => {
       cb(null, file.originalname); // Сохранение файла с оригинальным именем
@@ -33,84 +55,69 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// app.use(fileUpload({
-//   createParentPath: true,
-//   useTempFiles: true
-// }))
-
-// Получаем список заданий из базы данных по введенным критериям
-
 app.get('/', function(request, response) {
     response.set({
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
     })
 
-    const connection = mysql2.createConnection({
-        host: 'localhost',
-        user: 'AliBaBa',
-        password: 'A9l0E6x0',
-        database: 'OlimpEducation'
-    });
-    
-    connection.connect(function(error){
-      if(error){
+    const c = new Connection();
+    c.connect(function (error) {
+      if (error) {
         console.log(new Error(error));
       }
     });
 
     if (request.query.class != '0' && request.query.level != '0' && request.query.tags != ''){
-      connection.query(`select * from Tasks where class = ${request.query.class} and level = ${request.query.level.concat(createTagsQuery(request.query.tags))} order by _id`, 
+      c.query(`select * from Tasks where class = ${request.query.class} and level = ${request.query.level.concat(createTagsQuery(request.query.tags))} order by _id`, 
         function(_, results) {
             response.send(results);
         }
       )
     } else if (request.query.class == '0' && request.query.level == '0' && request.query.tags == ''){
-      connection.query(`select * from Tasks order by _id`, 
+      c.query(`select * from Tasks order by _id`, 
         function(_, results) {
             response.send(results);
         }
       )
     } else if (request.query.class != '0' && request.query.level == '0' && request.query.tags != ''){
-      connection.query(`select * from Tasks where class = ${request.query.class.concat(createTagsQuery(request.query.tags))} order by _id`, 
+      c.query(`select * from Tasks where class = ${request.query.class.concat(createTagsQuery(request.query.tags))} order by _id`, 
         function(_, results) {
             response.send(results);
         }
       )
     } else if (request.query.class == '0' && request.query.level == '0' && request.query.tags != ''){
-      connection.query(`select * from Tasks where class > ${request.query.class.concat(createTagsQuery(request.query.tags))} order by _id`, 
+      c.query(`select * from Tasks where class > ${request.query.class.concat(createTagsQuery(request.query.tags))} order by _id`, 
         function(_, results) {
             response.send(results);
         }
       )
     } else if (request.query.class == '0' && request.query.level != '0' && request.query.tags != ''){
-      connection.query(`select * from Tasks where level = ${request.query.level.concat(createTagsQuery(request.query.tags))} order by _id`, 
+      c.query(`select * from Tasks where level = ${request.query.level.concat(createTagsQuery(request.query.tags))} order by _id`, 
         function(_, results) {
             response.send(results);
         }
       )
     } else if (request.query.class != '0' && request.query.level == '0' && request.query.tags == ''){
-      connection.query(`select * from Tasks where level = ${request.query.level} order by _id`, 
+      c.query(`select * from Tasks where level = ${request.query.level} order by _id`, 
         function(_, results) {
             response.send(results);
         }
       )
     } else if (request.query.class != '0' && request.query.level != '0' && request.query.tags == ''){
-      connection.query(`select * from Tasks where class = ${request.query.class} and level = ${request.query.level} order by _id`, 
+      c.query(`select * from Tasks where class = ${request.query.class} and level = ${request.query.level} order by _id`, 
         function(_, results) {
             response.send(results);
         }
       )
     } else {
-      connection.query(`select * from Tasks where class = ${request.query.class} order by _id`, 
+      c.query(`select * from Tasks where class = ${request.query.class} order by _id`, 
         function(_, results) {
             response.send(results);
         }
       )
-    }
-    // console.log(`select * from Tasks where class = ${request.query.class} and level = ${request.query.level.concat(createTagsQuery(request.query.tags))}`)
-    
-    connection.end();
+    }    
+    c.end();
 })
 
 // Получаем дефолтный список задач (до выбор критериев)
@@ -121,25 +128,19 @@ app.get('/default', function(request, response){
     "Access-Control-Allow-Origin": "*",
   })
   
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'OlimpEducation'
-  });
-  
-  connection.connect(function(error){
-    if(error){
-      console.log(error);
+  const с = new Connection();
+  c.connect(function (error) {
+    if (error) {
+      console.log(new Error(error));
     }
   });
   
-  connection.query(`select * from Tasks where _id < ${Number(request.query.amount) + 1}`, 
+  с.query(`select * from Tasks where _id < ${Number(request.query.amount) + 1}`, 
       function(_, results) {
           response.send(results);
       }
   );
-  connection.end();
+  с.end();
 });
 
 // Получаем название файла с заданием для скачивания
@@ -178,25 +179,18 @@ app.get('/answer', function(request, response) {
     id = '0'.concat(id);
   };
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'OlimpEducation'
-  });
-
-  connection.connect(function(error){
-    if(error){
+  const с = new Connection();
+  c.connect(function (error) {
+    if (error) {
       console.log(new Error(error));
-    } else {
     }
   });
 
-  connection.query(`select nameFile from Answers where nameFile like "%${id}.pdf"`, function(_, result) {
+  с.query(`select nameFile from Answers where nameFile like "%${id}.pdf"`, function(_, result) {
     response.send({url: `http://localhost:3000/Answers/${result[0].nameFile}`});
   });
 
-  connection.end();
+  с.end();
 });
 
 app.use(bodyParser.json());
@@ -210,20 +204,14 @@ app.post('/login', function(request, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'OlimpEducation'
+  const с = new Connection();
+  c.connect(function (error) {
+    if (error) {
+      console.log(new Error(error));
+    }
   });
 
-  connection.connect(function (error) {
-    if(error){
-      console.log(new Error(error));
-    } 
-  }),
-
-  connection.query(`select * from Users where email = '${request.body.email}' and password = '${request.body.password}'`, function (_, result) {
+  с.query(`select * from Users where email = '${request.body.email}' and password = '${request.body.password}'`, function (_, result) {
     response.status(200);
     if (result.length != 0) {
       response.send({name: result[0].name, userId: result[0].userId});
@@ -232,7 +220,7 @@ app.post('/login', function(request, response) {
     }
   })
 
-  connection.end();
+  с.end();
 });
 
 // Проверка уникальности пользователя при регистрации
@@ -243,20 +231,14 @@ app.get('/signup/check', function(request, response){
     "Access-Control-Allow-Origin": "*"
   });
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'Olimpeducation'
-  });
-
-  connection.connect(function (error) {
-    if(error) {
+  const с = new Connection();
+  c.connect(function (error) {
+    if (error) {
       console.log(new Error(error));
     }
   });
 
-  connection.query(`select * from Users where email = '${request.query.email}'`, function (_, result) {
+  с.query(`select * from Users where email = '${request.query.email}'`, function (_, result) {
     if (result.length == 0){
       response.send({isUser: false});
     } else {
@@ -273,24 +255,18 @@ app.get('/signup/getid', function(_, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'Olimpeducation'
-  });
-
-  connection.connect(function (error) {
+  const с = new Connection();
+  c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  connection.query('select max(userId) as count from Users', function (_, result) {
+  с.query('select max(userId) as count from Users', function (_, result) {
     response.send({id: result[0].count + 1})
   });
 
-  connection.end();
+  с.end();
 })
 
 // Получаем данные и регистируем пользователя
@@ -313,25 +289,20 @@ app.post('/signup', function(request, response){
         fetch('http://localhost:5000/signup/getid', {method: 'GET'})
           .then(res => res.json())
           .then(function (data) {
-            const connection = mysql2.createConnection({
-              host: 'localhost',
-              user: 'AliBaBa',
-              password: 'A9l0E6x0',
-              database: 'OlimpEducation'
-            });
+            const с = new Connection();
           
-            connection.connect(function (error) {
+            с.connect(function (error) {
               if(error){
                 console.log(new Error(error));
               }
             });
 
-            connection.query(`insert into Users set userId = ${data.id}, name = '${request.body.name}', donetask_ids = '', password = '${request.body.password}', email = '${request.body.email}'`, function (err) {
+            с.query(`insert into Users set userId = ${data.id}, name = '${request.body.name}', donetask_ids = '', password = '${request.body.password}', email = '${request.body.email}'`, function (err) {
               console.log(err);
               response.send({userId: data.id, name: request.body.name});
             })
           
-            connection.end();
+            с.end();
           })
       }
     })
@@ -345,20 +316,14 @@ app.get('/getdoneid', function(request, response) {
     "Access-Control-Allow-Origin": "*"
   })
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'Olimpeducation'
-  })
-
-  connection.connect(function (error) {
+  const с = new Connection();
+  c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
-  })
+  });
 
-  connection.query(`select donetask_ids from Users where userId = ${Number(request.query.userid)}`, function (err, result) {
+  с.query(`select donetask_ids from Users where userId = ${Number(request.query.userid)}`, function (err, result) {
     if (err) {
       console.log(new Error(err));
       return
@@ -372,7 +337,7 @@ app.get('/getdoneid', function(request, response) {
     }
   });
 
-  connection.end();
+  с.end();
 });
 
 // Добавляем новое задание в список отмеченных пользователем заданий
@@ -384,14 +349,8 @@ app.post('/addtask', function(request, response) {
     "Access-Control-Allow-Origin": "*"
   })
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'Olimpeducation'
-  })
-
-  connection.connect(function (error) {
+  const с = new Connection();
+  c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
@@ -406,7 +365,7 @@ app.post('/addtask', function(request, response) {
         newData.push(request.body.id);
         newData = newData.join('/');
       }
-      connection.query(`update Users set donetask_ids = '${newData}' where userId = ${request.body.userId}`, function(err, result) {
+      с.query(`update Users set donetask_ids = '${newData}' where userId = ${request.body.userId}`, function(err, result) {
         if (err) {
           console.log(err);
           response.send({res: 'not success'});
@@ -414,7 +373,7 @@ app.post('/addtask', function(request, response) {
           response.send({res: 'success'})
         }
       });
-      connection.end();
+      с.end();
     });
 });
 
@@ -427,14 +386,8 @@ app.post('/removetask', function(request, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'Olimpeducation'
-  });
-
-  connection.connect(function (error) {
+  const с = new Connection();
+  c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
@@ -444,7 +397,7 @@ app.post('/removetask', function(request, response) {
     .then(res => res.json())
     .then(data => {
       let newData = data.ids.filter(i => Number(i) != Number(request.body.id)).join('/')
-      connection.query(`update Users set donetask_ids = '${newData}' where userId = ${request.body.userId}`, function(err, result) {
+      с.query(`update Users set donetask_ids = '${newData}' where userId = ${request.body.userId}`, function(err, result) {
         if (err) {
           console.log(err);
           response.send({res: 'not success'});
@@ -452,7 +405,7 @@ app.post('/removetask', function(request, response) {
           response.send({res: 'success'});
         }
       });
-      connection.end();
+      с.end();
     })
 });
 
@@ -463,21 +416,15 @@ app.delete('/removeuser', function(request, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'Olimpeducation'
-  });
-
-  connection.connect(function (error) {
+  const с = new Connection();
+  c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
   if (request.body.email != '') {
-    connection.query(`delete from Users where email = '${request.body.email}'`, function(e, _) {
+    с.query(`delete from Users where email = '${request.body.email}'`, function(e, _) {
       if (e) {
         console.log(e)
         response.send({res: 'not success'});
@@ -486,7 +433,7 @@ app.delete('/removeuser', function(request, response) {
       }
     })
   } else if (request.body.userid != '') {
-    connection.query(`delete from Users where userid = ${request.body.userid}`, function(e, _) {
+    с.query(`delete from Users where userid = ${request.body.userid}`, function(e, _) {
       if (e) {
         console.log(e)
         response.send({res: 'not success'});
@@ -497,7 +444,7 @@ app.delete('/removeuser', function(request, response) {
   } else {
     response.status(500);
   }
-  connection.end();
+  с.end();
 });
 
 app.get('/getusers', function(_, response) {
@@ -507,24 +454,18 @@ app.get('/getusers', function(_, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'Olimpeducation'
-  });
-
-  connection.connect(function (error) {
+  const с = new Connection();
+  с.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  connection.query('select * from Users', function(_, result) {
+  с.query('select * from Users', function(_, result) {
     response.send(result);
   })
 
-  connection.end();
+  с.end();
 })
 
 app.post('/takerights', function(request, response) {
@@ -534,21 +475,15 @@ app.post('/takerights', function(request, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'Olimpeducation'
-  });
-
-  connection.connect(function (error) {
+  const c = new Connection();
+  c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
   if (request.body.userid != '') {
-    connection.query(`update Users set isAdmin = true where userId = ${request.body.userid}`, function(e, _) {
+    c.query(`update Users set isAdmin = true where userId = ${request.body.userid}`, function(e, _) {
       if (e) {
         console.log(e)
         response.send({res: 'not success'});
@@ -557,7 +492,7 @@ app.post('/takerights', function(request, response) {
       }
     });
   } else if (request.body.email != '') {
-    connection.query(`update Users set isAdmin = true where email = '${request.body.email}'`, function(e, _) {
+    c.query(`update Users set isAdmin = true where email = '${request.body.email}'`, function(e, _) {
       if (e) {
         console.log(e)
         response.send({res: 'not success'});
@@ -568,8 +503,8 @@ app.post('/takerights', function(request, response) {
   } else {
     response.send(500);
   }
-  
-  connection.end();
+
+  c.end();
 })
 
 app.post('/recallrights', function(request, response) {
@@ -579,21 +514,15 @@ app.post('/recallrights', function(request, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'Olimpeducation'
-  });
-
-  connection.connect(function (error) {
+  const c = new Connection();
+  c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
   if (request.body.userid != '') {
-    connection.query(`update Users set isAdmin = false where userId = ${request.body.userid}`, function(e, _) {
+    c.query(`update Users set isAdmin = false where userId = ${request.body.userid}`, function(e, _) {
       if (e) {
         console.log(e)
         response.send({res: 'not success'});
@@ -602,7 +531,7 @@ app.post('/recallrights', function(request, response) {
       }
     });
   } else if (request.body.email != '') {
-    connection.query(`update Users set isAdmin = false where email = '${request.body.email}'`, function(e, _) {
+    c.query(`update Users set isAdmin = false where email = '${request.body.email}'`, function(e, _) {
       if (e) {
         console.log(e)
         response.send({res: 'not success'});
@@ -614,7 +543,7 @@ app.post('/recallrights', function(request, response) {
     response.send(500);
   }
   
-  connection.end();
+  c.end();
 })
 
 app.get('/checkrighs', function(request, response) {
@@ -624,29 +553,23 @@ app.get('/checkrighs', function(request, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'Olimpeducation'
-  });
-
-  connection.connect(function (error) {
+  const c = new Connection();
+  c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  connection.query(`select isAdmin from Users where userId = ${request.query.userid}`, function(e, result) {
+  c.query(`select isAdmin from Users where userId = ${request.query.userid}`, function(e, result) {
     if (e || result.length == 0) {
       console.log("error: " + toString(e))
       response.status(500);
     } else {
       response.send({isAdmin: result[0].isAdmin == '1'});
     }
-  })
-  
-  connection.end();
+  });
+
+  c.end();
 });
 
 app.get('/gettasks', function(_, response) {
@@ -656,24 +579,18 @@ app.get('/gettasks', function(_, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'Olimpeducation'
-  });
-
-  connection.connect(function (error) {
-    if (error) {
-      console.log(new Error(error));
+  const c = new Connection();
+  c.connect(function (error) {
+      if (error) {
+        console.log(new Error(error));
+      }
     }
-  });
-
-  connection.query('select * from Tasks', function(_, result) {
+  )
+  c.query('select * from Tasks', function(_, result) {
     response.send(result);
   })
 
-  connection.end();
+  c.end()
 });
 
 app.get('/getanswers', function(_, response) {
@@ -683,24 +600,18 @@ app.get('/getanswers', function(_, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'Olimpeducation'
-  });
-
-  connection.connect(function (error) {
+  const с = new Connection();
+  с.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  connection.query('select * from Answers', function(_, result) {
+  с.query('select * from Answers', function(_, result) {
     response.send(result);
   })
 
-  connection.end();
+  с.end();
 });
 
 app.post('/addnewtask', function(request, response) {
@@ -710,31 +621,32 @@ app.post('/addnewtask', function(request, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
-  let tags = request.body.tag
+  let tags = [];
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'Olimpeducation'
-  });
+  for (let i = 1; i <= Object.keys(request.body).length - 4; i++) {
+    tags.push(request.body[`tag${i}`]);
+  }
 
-  connection.connect(function (error) {
+  tags = tags.join('/');
+
+  const с = new Connection();
+
+  с.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  connection.query(`insert into Tasks set _id = ${request.body._id}, class = ${request.body.class}, level = ${request.body.level}, tags = '${tags}'`, function(e, _) {
+  с.query(`insert into Tasks set _id = ${request.body._id}, class = ${request.body.class}, level = ${request.body.level}, tags = '${tags}'`, function(e, _) {
     if (e) {
       console.log(e)
       response.send({res: 'not success'});
     } else {
-      response.send({res: 'success'})
+      response.send({res: 'success'});
     }
   })
 
-  connection.end();
+  с.end();
 });
 
 app.post('/addnewtaskfile', upload.single('file'), function (request, response) {
@@ -743,31 +655,30 @@ app.post('/addnewtaskfile', upload.single('file'), function (request, response) 
     "Access-Control-Allow-Origin": "*"
   });
   response.status(200);
-  response.json({ message: 'File uploaded successfully', file: request.file });
-  
-})
+  response.send({res: 'success'});
+});
 
-app.delete('/removetask', function(request, response) {
+app.delete('/removetaskadmin', function(request, response) {
   response.status(200);
   response.set({
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*"
   });
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'Olimpeducation'
-  });
+  let strId = String(request.body.id);
+  for (let i = 0; i < 4 - strId.length; i++) {
+    strId = '0' + strId;
+  }
 
-  connection.connect(function (error) {
+  const с = new Connection();
+
+  с.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  connection.query(`delete from Tasks where _id = ${request.body._id}`, function(e, _) {
+  с.query(`delete from Tasks where _id = ${request.body.id}`, function(e, _) {
     if (e) {
       console.log(e)
       response.send({res: 'not success'});
@@ -776,7 +687,11 @@ app.delete('/removetask', function(request, response) {
     }
   });
 
-  connection.end();
+  с.end();
+
+  fs.unlink(`../olimpeducation/public/Задачи/ID${strId}.jpg`, (err) => {
+    if (err) console.log(new Error(err));
+  });
 });
 
 app.post('/edittask', function(request, response) {
@@ -786,31 +701,48 @@ app.post('/edittask', function(request, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
-  let tags = request.body.tags;
+  if (request.body['tag1']) {
+    let tags = [];
+  
+    for (let i = 1; i <= Object.keys(request.body).length - 4; i++) {
+      tags.push(request.body[`tag${i}`]);
+    }
+  
+    tags = tags.join('/');
+  } else {
+    tags = false;
+  }
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'Olimpeducation'
-  });
+  const с = new Connection();
 
-  connection.connect(function (error) {
+  с.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  connection.query(`update Tasks set class = ${request.body.class} level = ${request.body.level} tags = '${tags}' where _id = ${request.body._id}`, function(e, _) {
-    if (e) {
-      console.log(e)
-      response.send({res: 'not success'});
-    } else {
-      response.send({res: 'success'});
-    }
-  })
+  if (request.body.class || request.body.level || tags) {
+    с.query(`update Tasks set ${request.body.class ? `class = ${request.body.class}, ` : ''}${request.body.level ? `level = ${request.body.level}, ` : ''}${tags ? `level = ${tags}, ` : ''}where _id = ${request.body._id}`, function(e, _) {
+      if (e) {
+        console.log(e)
+        response.send({res: 'not success'});
+      } else {
+        response.send({res: 'success'});
+      }
+    });
+  }
 
-  connection.end();
+  response.send({res: 'success'});
+  с.end();
+});
+
+app.post('/edittaskfile', upload.single('file'), function (_, response) {
+  response.set({
+    "Content-type": "application/json",
+    "Access-Control-Allow-Origin": "*"
+  });
+  response.status(200);
+  response.send({res: 'success'});
 });
 
 app.post('/addanswer', function(request, response) {
@@ -819,21 +751,24 @@ app.post('/addanswer', function(request, response) {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*"
   });
+  response.send({res: 'success'});
+});
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'Olimpeducation'
+app.post('/addanswerfile', upload.single('file'), function(request, response) {
+  response.set({
+    "Content-type": "application/json",
+    "Access-Control-Allow-Origin": "*"
   });
+  response.status(200);
+  const с = new Connection();
 
-  connection.connect(function (error) {
+  с.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  connection.query(`insert into Answers set nameFile = '${request.body.nameFile}'`, function(e, _) {
+  с.query(`insert into Answers set nameFile = '${request.file.filename}'`, function(e, _) {
     if (e) {
       console.log(e)
       response.send({res: 'not success'});
@@ -842,8 +777,8 @@ app.post('/addanswer', function(request, response) {
     }
   })
 
-  connection.end();
-});
+  с.end();
+})
 
 app.delete('/removeanswer', function(request, response){
   response.status(200);
@@ -852,29 +787,41 @@ app.delete('/removeanswer', function(request, response){
     "Access-Control-Allow-Origin": "*"
   });
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'Olimpeducation'
-  });
+  let strId = String(request.body.id);
+  for (let i = 0; i < 4 - strId.length; i++) {
+    strId = '0' + strId;
+  }
 
-  connection.connect(function (error) {
+  const c = new Connection();
+
+  c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  connection.query(`delete from Answers where nameFile like '%${request.body.id}.pdf' `, function(e, _) {
-    if (e) {
-      console.log(e)
-      response.send({res: 'not success'});
-    } else {
-      response.send({res: 'success'});
-    }
-  })
+  c.query(`select nameFile from Answers where nameFile like '%${request.body.id}.pdf'`, function (e, _) {
+    if (!e) c.end();
+    const nc = new Connection();
+    nc.connect(function (error) {
+      if (error) {
+        console.log(new Error(error));
+      }
+    });
+    nc.query(`delete from Answers where nameFile like '%${request.body.id}.pdf' `, function(e, _) {
+      if (e) {
+        console.log(e);
+        response.send({res: 'not success'});
+      } else {
+        response.send({res: 'success'});
+      }
+    });
+    nc.end();
+  });
 
-  connection.end();
+  fs.unlink(`../olimpeducation/public/Answers/ID${strId}.jpg`, (err) => {
+    if (err) console.log(new Error(err));
+  });
 });
 
 app.post('/editanswer', function(request, response){
@@ -884,20 +831,15 @@ app.post('/editanswer', function(request, response){
     "Access-Control-Allow-Origin": "*"
   });
 
-  const connection = mysql2.createConnection({
-    host: 'localhost',
-    user: 'AliBaBa',
-    password: 'A9l0E6x0',
-    database: 'Olimpeducation'
-  });
+  const с = new Connection();
 
-  connection.connect(function (error) {
+  с.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  connection.query(`update Answers set nameFile = ${request.body.nameFile} where id = ${request.body.id}`, function(e, _) {
+  с.query(`update Answers set nameFile = ${request.body.nameFile} where id = ${request.body.id}`, function(e, _) {
     if (e) {
       console.log(e)
       response.send({res: 'not success'});
@@ -906,7 +848,7 @@ app.post('/editanswer', function(request, response){
     }
   })
 
-  connection.end();
+  с.end();
 });
 
 app.listen(5000);
