@@ -819,7 +819,7 @@ app.delete('/removeanswer', function(request, response){
     nc.end();
   });
 
-  fs.unlink(`../olimpeducation/public/Answers/ID${strId}.jpg`, (err) => {
+  fs.unlink(`../olimpeducation/public/Answers/ID${strId}.jpg`, function (err) {
     if (err) console.log(new Error(err));
   });
 });
@@ -831,24 +831,90 @@ app.post('/editanswer', function(request, response){
     "Access-Control-Allow-Origin": "*"
   });
 
-  const с = new Connection();
+  let strId = String(request.body.id);
+  for (let i = 0; i < 4 - strId.length; i++) {
+    strId = '0' + strId;
+  }
 
-  с.connect(function (error) {
+  const c = new Connection();
+
+  c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  с.query(`update Answers set nameFile = ${request.body.nameFile} where id = ${request.body.id}`, function(e, _) {
+  c.query(`select nameFile from Answers where nameFile like '%${strId}.pdf'`, function(e, result) {
+    if (e) {
+      console.log(e)
+      response.send({res: 'not success'});
+    } else {
+      c.end();
+      fs.unlink(`../olimpeducation/public/Answers/${result[0].nameFile}`, function (err) {
+        if (err) console.log(new Error(err));
+      });
+      response.send({res: 'success'});
+
+      // const nc = new Connection();
+
+      // nc.connect(function (error) {
+      //   if (error) {
+      //     console.log(new Error(error));
+      //   }
+      // });
+
+      // nc.query(`delete from Answers where nameFile = '${result[0].nameFile}'`, function(err, _) {
+      //   if (err) {
+      //     console.log(err);
+      //     response.send({res: 'not success'});
+      //   } else {
+      //     response.send({res: 'scucess'});
+      //   }
+      // });
+      // nc.end
+    }
+  });
+
+  
+});
+
+app.post('/editanswerfile', upload.single('file'), function(request, response) {
+  response.status(200);
+  response.set({
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*"
+  });
+
+  let strId = String(request.body.id);
+  for (let i = 0; i < 4 - strId.length; i++) {
+    strId = '0' + strId;
+  }
+
+  const c = new Connection();
+
+  c.connect(function (error) {
+    if (error) {
+      console.log(new Error(error));
+    }
+  });
+
+  c.query(`update Answers set nameFile = '${request.file.filename}' where nameFile like '${strId}.pdf'`, function(e, _) {
     if (e) {
       console.log(e)
       response.send({res: 'not success'});
     } else {
       response.send({res: 'success'});
     }
-  })
+  });
 
-  с.end();
-});
+  // c.query(`insert into Answers set nameFile = '${request.file.filename}'`, function(e, _) {
+  //   if (e) {
+  //     console.log(e)
+  //     response.send({res: 'not success'});
+  //   } else {
+  //     response.send({res: 'success'});
+  //   }
+  // })
+})
 
 app.listen(5000);
