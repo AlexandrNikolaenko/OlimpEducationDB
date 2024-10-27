@@ -7,7 +7,11 @@ const cors = require('cors');
 const fs = require('fs');
 
 const app = express();
-// const upload = multer({dest: './uploads/'})
+
+app.use(bodyParser.json());
+app.use(cors());
+app.use('/img/Answers', express.static('./img/Answers'));
+app.use('/img/Tasks', express.static('./img/Tasks'));
 
 function createTagsQuery(tagsStroke){
   let queryPart = '';
@@ -43,9 +47,9 @@ class Connection {
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (typeof req.body.class == 'string') {
-      cb(null, `../olimpeducation/public/Задачи/`); // Папка для хранения загруженных файлов
+      cb(null, `./img/Tasks/`); // Папка для хранения загруженных файлов
     } else {
-      cb(null, `../olimpeducation/public/Answers/`);
+      cb(null, `./img/Answers/`);
     }
   },
   filename: (req, file, cb) => {
@@ -128,19 +132,19 @@ app.get('/default', function(request, response){
     "Access-Control-Allow-Origin": "*",
   })
   
-  const с = new Connection();
+  const c = new Connection();
   c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
   
-  с.query(`select * from Tasks where _id < ${Number(request.query.amount) + 1}`, 
+  c.query(`select * from Tasks where _id < ${Number(request.query.amount) + 1}`, 
       function(_, results) {
           response.send(results);
       }
   );
-  с.end();
+  c.end();
 });
 
 // Получаем название файла с заданием для скачивания
@@ -157,7 +161,7 @@ app.get('/task', function(request, response) {
     id = '0'.concat(id);
   };
 
-  response.send({url: `http://localhost:3000/%D0%97%D0%B0%D0%B4%D0%B0%D1%87%D0%B8/ID${id}.jpg`});
+  response.send({url: `http://localhost:5000/img/Tasks/ID${id}.jpg`});
 });
 
 // Получаем название файла с решением для скачивания
@@ -179,22 +183,19 @@ app.get('/answer', function(request, response) {
     id = '0'.concat(id);
   };
 
-  const с = new Connection();
+  const c = new Connection();
   c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  с.query(`select nameFile from Answers where nameFile like "%${id}.pdf"`, function(_, result) {
-    response.send({url: `http://localhost:3000/Answers/${result[0].nameFile}`});
+  c.query(`select nameFile from Answers where nameFile like "%${id}.pdf"`, function(_, result) {
+    response.send({url: `http://localhost:5000/img/Answers/${result[0].nameFile}`});
   });
 
-  с.end();
+  c.end();
 });
-
-app.use(bodyParser.json());
-app.use(cors());
 
 // Обработка на вход пользователя
 
@@ -204,14 +205,14 @@ app.post('/login', function(request, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
-  const с = new Connection();
+  const c = new Connection();
   c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  с.query(`select * from Users where email = '${request.body.email}' and password = '${request.body.password}'`, function (_, result) {
+  c.query(`select * from Users where email = '${request.body.email}' and password = '${request.body.password}'`, function (_, result) {
     response.status(200);
     if (result.length != 0) {
       response.send({name: result[0].name, userId: result[0].userId});
@@ -220,7 +221,7 @@ app.post('/login', function(request, response) {
     }
   })
 
-  с.end();
+  c.end();
 });
 
 // Проверка уникальности пользователя при регистрации
@@ -231,20 +232,22 @@ app.get('/signup/check', function(request, response){
     "Access-Control-Allow-Origin": "*"
   });
 
-  const с = new Connection();
+  const c = new Connection();
   c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  с.query(`select * from Users where email = '${request.query.email}'`, function (_, result) {
+  c.query(`select * from Users where email = '${request.query.email}'`, function (_, result) {
     if (result.length == 0){
       response.send({isUser: false});
     } else {
       response.send({isUser: true});
     }
-  })
+  });
+
+  c.end();
 });
 
 // Получаем уникальный id для пользователя
@@ -255,18 +258,18 @@ app.get('/signup/getid', function(_, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
-  const с = new Connection();
+  const c = new Connection();
   c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  с.query('select max(userId) as count from Users', function (_, result) {
+  c.query('select max(userId) as count from Users', function (_, result) {
     response.send({id: result[0].count + 1})
   });
 
-  с.end();
+  c.end();
 })
 
 // Получаем данные и регистируем пользователя
@@ -316,19 +319,18 @@ app.get('/getdoneid', function(request, response) {
     "Access-Control-Allow-Origin": "*"
   })
 
-  const с = new Connection();
+  const c = new Connection();
   c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  с.query(`select donetask_ids from Users where userId = ${Number(request.query.userid)}`, function (err, result) {
+  c.query(`select donetask_ids from Users where userId = ${Number(request.query.userid)}`, function (err, result) {
     if (err) {
       console.log(new Error(err));
       return
     }
-
     if (result[0].donetask_ids.length != 0) {
       let ids = result[0].donetask_ids.split('/').map(elem => String(elem));
       response.send({ids: ids});
@@ -337,7 +339,7 @@ app.get('/getdoneid', function(request, response) {
     }
   });
 
-  с.end();
+  c.end();
 });
 
 // Добавляем новое задание в список отмеченных пользователем заданий
@@ -349,7 +351,7 @@ app.post('/addtask', function(request, response) {
     "Access-Control-Allow-Origin": "*"
   })
 
-  const с = new Connection();
+  const c = new Connection();
   c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
@@ -365,7 +367,7 @@ app.post('/addtask', function(request, response) {
         newData.push(request.body.id);
         newData = newData.join('/');
       }
-      с.query(`update Users set donetask_ids = '${newData}' where userId = ${request.body.userId}`, function(err, result) {
+      c.query(`update Users set donetask_ids = '${newData}' where userId = ${request.body.userId}`, function(err, result) {
         if (err) {
           console.log(err);
           response.send({res: 'not success'});
@@ -373,7 +375,7 @@ app.post('/addtask', function(request, response) {
           response.send({res: 'success'})
         }
       });
-      с.end();
+      c.end();
     });
 });
 
@@ -386,7 +388,7 @@ app.post('/removetask', function(request, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
-  const с = new Connection();
+  const c = new Connection();
   c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
@@ -397,7 +399,7 @@ app.post('/removetask', function(request, response) {
     .then(res => res.json())
     .then(data => {
       let newData = data.ids.filter(i => Number(i) != Number(request.body.id)).join('/')
-      с.query(`update Users set donetask_ids = '${newData}' where userId = ${request.body.userId}`, function(err, result) {
+      c.query(`update Users set donetask_ids = '${newData}' where userId = ${request.body.userId}`, function(err, _) {
         if (err) {
           console.log(err);
           response.send({res: 'not success'});
@@ -405,7 +407,7 @@ app.post('/removetask', function(request, response) {
           response.send({res: 'success'});
         }
       });
-      с.end();
+      c.end();
     })
 });
 
@@ -416,7 +418,7 @@ app.delete('/removeuser', function(request, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
-  const с = new Connection();
+  const c = new Connection();
   c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
@@ -424,7 +426,7 @@ app.delete('/removeuser', function(request, response) {
   });
 
   if (request.body.email != '') {
-    с.query(`delete from Users where email = '${request.body.email}'`, function(e, _) {
+    c.query(`delete from Users where email = '${request.body.email}'`, function(e, _) {
       if (e) {
         console.log(e)
         response.send({res: 'not success'});
@@ -433,7 +435,7 @@ app.delete('/removeuser', function(request, response) {
       }
     })
   } else if (request.body.userid != '') {
-    с.query(`delete from Users where userid = ${request.body.userid}`, function(e, _) {
+    c.query(`delete from Users where userid = ${request.body.userid}`, function(e, _) {
       if (e) {
         console.log(e)
         response.send({res: 'not success'});
@@ -444,7 +446,7 @@ app.delete('/removeuser', function(request, response) {
   } else {
     response.status(500);
   }
-  с.end();
+  c.end();
 });
 
 app.get('/getusers', function(_, response) {
@@ -454,18 +456,18 @@ app.get('/getusers', function(_, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
-  const с = new Connection();
-  с.connect(function (error) {
+  const c = new Connection();
+  c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  с.query('select * from Users', function(_, result) {
+  c.query('select * from Users', function(_, result) {
     response.send(result);
   })
 
-  с.end();
+  c.end();
 })
 
 app.post('/takerights', function(request, response) {
@@ -600,18 +602,18 @@ app.get('/getanswers', function(_, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
-  const с = new Connection();
-  с.connect(function (error) {
+  const c = new Connection();
+  c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  с.query('select * from Answers', function(_, result) {
+  c.query('select * from Answers', function(_, result) {
     response.send(result);
   })
 
-  с.end();
+  c.end();
 });
 
 app.post('/addnewtask', function(request, response) {
@@ -629,15 +631,15 @@ app.post('/addnewtask', function(request, response) {
 
   tags = tags.join('/');
 
-  const с = new Connection();
+  const c = new Connection();
 
-  с.connect(function (error) {
+  c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  с.query(`insert into Tasks set _id = ${request.body._id}, class = ${request.body.class}, level = ${request.body.level}, tags = '${tags}'`, function(e, _) {
+  c.query(`insert into Tasks set _id = ${request.body._id}, class = ${request.body.class}, level = ${request.body.level}, tags = '${tags}'`, function(e, _) {
     if (e) {
       console.log(e)
       response.send({res: 'not success'});
@@ -646,10 +648,10 @@ app.post('/addnewtask', function(request, response) {
     }
   })
 
-  с.end();
+  c.end();
 });
 
-app.post('/addnewtaskfile', upload.single('file'), function (request, response) {
+app.post('/addnewtaskfile', upload.single('file'), function (_, response) {
   response.set({
     "Content-type": "application/json",
     "Access-Control-Allow-Origin": "*"
@@ -670,15 +672,15 @@ app.delete('/removetaskadmin', function(request, response) {
     strId = '0' + strId;
   }
 
-  const с = new Connection();
+  const c = new Connection();
 
-  с.connect(function (error) {
+  c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  с.query(`delete from Tasks where _id = ${request.body.id}`, function(e, _) {
+  c.query(`delete from Tasks where _id = ${request.body.id}`, function(e, _) {
     if (e) {
       console.log(e)
       response.send({res: 'not success'});
@@ -687,9 +689,9 @@ app.delete('/removetaskadmin', function(request, response) {
     }
   });
 
-  с.end();
+  c.end();
 
-  fs.unlink(`../olimpeducation/public/Задачи/ID${strId}.jpg`, (err) => {
+  fs.unlink(`./img/Задачи/ID${strId}.jpg`, (err) => {
     if (err) console.log(new Error(err));
   });
 });
@@ -701,8 +703,10 @@ app.post('/edittask', function(request, response) {
     "Access-Control-Allow-Origin": "*"
   });
 
+  let tags
+
   if (request.body['tag1']) {
-    let tags = [];
+    tags = [];
   
     for (let i = 1; i <= Object.keys(request.body).length - 4; i++) {
       tags.push(request.body[`tag${i}`]);
@@ -713,16 +717,16 @@ app.post('/edittask', function(request, response) {
     tags = false;
   }
 
-  const с = new Connection();
+  const c = new Connection();
 
-  с.connect(function (error) {
+  c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
   if (request.body.class || request.body.level || tags) {
-    с.query(`update Tasks set ${request.body.class ? `class = ${request.body.class}, ` : ''}${request.body.level ? `level = ${request.body.level}, ` : ''}${tags ? `level = ${tags}, ` : ''}where _id = ${request.body._id}`, function(e, _) {
+    c.query(`update Tasks set ${request.body.class ? `class = ${request.body.class}${tags || request.body.level ? ',' : ''} ` : ''}${request.body.level ? `level = ${request.body.level}${tags ? ',' : ''} ` : ''}${tags ? `tags = '${tags}' ` : ''}where _id = ${request.body._id}`, function(e, _) {
       if (e) {
         console.log(e)
         response.send({res: 'not success'});
@@ -730,10 +734,9 @@ app.post('/edittask', function(request, response) {
         response.send({res: 'success'});
       }
     });
-  }
-
-  response.send({res: 'success'});
-  с.end();
+  } else response.send({res: 'success'});
+  
+  c.end();
 });
 
 app.post('/edittaskfile', upload.single('file'), function (_, response) {
@@ -745,7 +748,7 @@ app.post('/edittaskfile', upload.single('file'), function (_, response) {
   response.send({res: 'success'});
 });
 
-app.post('/addanswer', function(request, response) {
+app.post('/addanswer', function(_, response) {
   response.status(200);
   response.set({
     "Content-Type": "application/json",
@@ -760,15 +763,15 @@ app.post('/addanswerfile', upload.single('file'), function(request, response) {
     "Access-Control-Allow-Origin": "*"
   });
   response.status(200);
-  const с = new Connection();
+  const c = new Connection();
 
-  с.connect(function (error) {
+  c.connect(function (error) {
     if (error) {
       console.log(new Error(error));
     }
   });
 
-  с.query(`insert into Answers set nameFile = '${request.file.filename}'`, function(e, _) {
+  c.query(`insert into Answers set nameFile = '${request.file.filename}'`, function(e, _) {
     if (e) {
       console.log(e)
       response.send({res: 'not success'});
@@ -777,7 +780,7 @@ app.post('/addanswerfile', upload.single('file'), function(request, response) {
     }
   })
 
-  с.end();
+  c.end();
 })
 
 app.delete('/removeanswer', function(request, response){
@@ -801,7 +804,8 @@ app.delete('/removeanswer', function(request, response){
   });
 
   c.query(`select nameFile from Answers where nameFile like '%${request.body.id}.pdf'`, function (e, _) {
-    if (!e) c.end();
+    if (!e) {response.send({res: 'not success'}); return;}
+    c.end();
     const nc = new Connection();
     nc.connect(function (error) {
       if (error) {
@@ -819,7 +823,7 @@ app.delete('/removeanswer', function(request, response){
     nc.end();
   });
 
-  fs.unlink(`../olimpeducation/public/Answers/ID${strId}.jpg`, function (err) {
+  fs.unlink(`./img/Answers/ID${strId}.jpg`, function (err) {
     if (err) console.log(new Error(err));
   });
 });
@@ -849,33 +853,14 @@ app.post('/editanswer', function(request, response){
       console.log(e)
       response.send({res: 'not success'});
     } else {
-      c.end();
-      fs.unlink(`../olimpeducation/public/Answers/${result[0].nameFile}`, function (err) {
+      fs.unlink(`./img/Answers/${result[0].nameFile}`, function (err) {
         if (err) console.log(new Error(err));
       });
       response.send({res: 'success'});
-
-      // const nc = new Connection();
-
-      // nc.connect(function (error) {
-      //   if (error) {
-      //     console.log(new Error(error));
-      //   }
-      // });
-
-      // nc.query(`delete from Answers where nameFile = '${result[0].nameFile}'`, function(err, _) {
-      //   if (err) {
-      //     console.log(err);
-      //     response.send({res: 'not success'});
-      //   } else {
-      //     response.send({res: 'scucess'});
-      //   }
-      // });
-      // nc.end
     }
   });
 
-  
+  c.end();
 });
 
 app.post('/editanswerfile', upload.single('file'), function(request, response) {
@@ -907,14 +892,7 @@ app.post('/editanswerfile', upload.single('file'), function(request, response) {
     }
   });
 
-  // c.query(`insert into Answers set nameFile = '${request.file.filename}'`, function(e, _) {
-  //   if (e) {
-  //     console.log(e)
-  //     response.send({res: 'not success'});
-  //   } else {
-  //     response.send({res: 'success'});
-  //   }
-  // })
+  c.end();
 })
 
 app.listen(5000);
