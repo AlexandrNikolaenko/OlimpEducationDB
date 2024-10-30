@@ -46,11 +46,8 @@ class Connection {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    if (typeof req.body.class == 'string') {
-      cb(null, `./img/Tasks/`); // Папка для хранения загруженных файлов
-    } else {
-      cb(null, `./img/Answers/`);
-    }
+    if (typeof req.body.class == 'string') cb(null, `./img/Tasks/`); // Папка для хранения загруженных файлов
+    else cb(null, `./img/Answers/`);
   },
   filename: (req, file, cb) => {
       cb(null, file.originalname); // Сохранение файла с оригинальным именем
@@ -103,7 +100,7 @@ app.get('/', function(request, response) {
         }
       )
     } else if (request.query.class != '0' && request.query.level == '0' && request.query.tags == ''){
-      c.query(`select * from Tasks where level = ${request.query.level} order by _id`, 
+      c.query(`select * from Tasks where class = ${request.query.class} order by _id`, 
         function(_, results) {
             response.send(results);
         }
@@ -161,7 +158,18 @@ app.get('/task', function(request, response) {
     id = '0'.concat(id);
   };
 
-  response.send({url: `http://localhost:5000/img/Tasks/ID${id}.jpg`});
+  let url = [`http://localhost:5000/img/Tasks/ID${id}.jpg`];
+
+  async function check() {
+    for (let i = 1; i < 4; i++) {
+      let r = await fetch(`http://localhost:5000/img/Tasks/ID${id}(${i}).jpg`);
+      if (r.status == 200) url.push(`http://localhost:5000/img/Tasks/ID${id}(${i}).jpg`);
+      else break;
+    }
+    response.send({url: url});
+  }
+
+  check();
 });
 
 // Получаем название файла с решением для скачивания
@@ -651,11 +659,12 @@ app.post('/addnewtask', function(request, response) {
   c.end();
 });
 
-app.post('/addnewtaskfile', upload.single('file'), function (_, response) {
+app.post('/addnewtaskfile', upload.array('files[]'), function (request, response) {
   response.set({
     "Content-type": "application/json",
     "Access-Control-Allow-Origin": "*"
   });
+  console.log(request.body);
   response.status(200);
   response.send({res: 'success'});
 });
@@ -691,9 +700,23 @@ app.delete('/removetaskadmin', function(request, response) {
 
   c.end();
 
-  fs.unlink(`./img/Задачи/ID${strId}.jpg`, (err) => {
+  fs.unlink(`./img/Tasks/ID${strId}.jpg`, (err) => {
     if (err) console.log(new Error(err));
   });
+
+  async function check() {
+    for (let i = 1; i < 4; i++) {
+      let r = await fetch(`http://localhost:5000/img/Tasks/ID${strId}(${i}).jpg`);
+      if (r.status == 200) {
+        fs.unlink(`./img/Tasks/ID${strId}(${i}).jpg`, (err) => {
+          if (err) console.log(new Error(err));
+        });
+      }
+      else break;
+    }
+  }
+
+  check();
 });
 
 app.post('/edittask', function(request, response) {
@@ -739,11 +762,36 @@ app.post('/edittask', function(request, response) {
   c.end();
 });
 
-app.post('/edittaskfile', upload.single('file'), function (_, response) {
+app.post('/edittaskfile', upload.array('files[]'), function (request, response) {
   response.set({
     "Content-type": "application/json",
     "Access-Control-Allow-Origin": "*"
   });
+
+  let strId = String(request.body._id);
+  for (let i = 0; i < 4 - strId.length; i++) {
+    strId = '0' + strId;
+  }
+
+  let n = request.files.length;
+
+  async function check() {
+    let r = await fetch(`http://localhost:5000/img/Tasks/ID${strId}(${n}).jpg`);
+    if (r.status == 200) {
+      for (let i = n; n < 4; i++) {
+        let nr = await fetch(`http://localhost:5000/img/Tasks/ID${strId}(${i}).jpg`);
+        if (nr.status == 200) {
+          fs.unlink(`./img/Tasks/ID${strId}(${i}).jpg`, (err) => {
+            if (err) console.log(new Error(err));
+          });
+        }
+        else break;
+      }
+    }
+  }
+
+  check();
+
   response.status(200);
   response.send({res: 'success'});
 });

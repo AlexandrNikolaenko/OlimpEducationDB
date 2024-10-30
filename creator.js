@@ -87,10 +87,10 @@ const Answers = sequelize.define(
 )
 
 // Tasks.sync({alter: true});
-Users.sync({alter: true});
+// Users.sync({alter: true});
 // Answers.sync({alter: true});
 
-// fs.readdir('./Answers', (err, files) => {
+// fs.readdir('./img/Answers', (err, files) => {
 //   if (err) throw err;
 //     console.log(files.length);
 //   for (let file of files) {
